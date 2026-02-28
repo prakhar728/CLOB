@@ -18,4 +18,20 @@
 ### Risks
 -  Time taken, since I'm taking my own time to write things out - it can be tough.
 
+-----
 
+### Problem
+-  Order by Order? Level by level?
+- Finite Depth? Infinite Depth
+
+### Options Considered
+- The problems
+
+### Decision
+- Order by Order + infinite depth
+
+### Why
+- The idea is to build a full working infra for HFT simulation. Work through and through to understand everything.
+
+### Risks
+- -------

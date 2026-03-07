@@ -433,14 +433,36 @@ flowchart TD
 ```
 
 ## 16) Files and Functions to Implement First
-1. `src/domain/order.rs`
-- `validate_order_fields`
-- `compute_order_hash`
-- `verify_signature`
 
-2. `src/domain/market.rs`
-- `validate_tick_lot`
-- `is_market_active`
+### Progress tracker
+- [x] `src/domain/order.rs` — complete (2026-03-07)
+- [x] `src/domain/market.rs` — complete (2026-03-07)
+- [ ] `src/sequencer/mod.rs`
+- [ ] `src/engine/orderbook.rs`
+- [ ] `src/engine/matching.rs`
+- [ ] `src/events/mod.rs`
+- [ ] `src/replay/mod.rs`
+- [ ] `src/api/rest.rs` / `ws.rs`
+- [ ] `src/risk/mod.rs`
+- [ ] `src/snapshot/mod.rs`
+- [ ] `src/ops/admin.rs`
+
+---
+
+1. `src/domain/order.rs` ✅ (2026-03-07)
+- `validate_fields` — stateless field checks (schema version, non-empty fields, price/size > 0, expiry)
+- `canonical_hash` — frozen SHA-256 binary encoding, NEAR-compatible, field layout documented and frozen
+- `verify_signature` — ed25519 over the canonical hash
+- Types: `SignedOrder`, `Order`, `OrderHash`, `OrderId`, `Fill`, `Side`, `TimeInForce`, `OrderStatus`, `OrderError`
+- Custom serde hex encoding for `[u8; 32]` / `[u8; 64]` fields
+- 20 tests green
+
+2. `src/domain/market.rs` ✅ (2026-03-07)
+- `validate_price` — checks > 0 and tick_size alignment
+- `validate_size` — checks > 0 and lot_size alignment
+- `is_active` — market status gate used by engine before accepting orders
+- Types: `MarketId`, `MarketConfig`, `MarketStatus`, `MarketError`
+- 6 tests green
 
 3. `src/sequencer/mod.rs`
 - `next_sequence_id`
@@ -680,3 +702,34 @@ flowchart LR
 - Keep all writes that mutate order state and append events in one DB transaction.
 - Enforce monotonic `sequence_id` generation inside the sequencer path.
 - Snapshot every N events (start with N=100k; tune from benchmarks).
+
+## 21) Rust Execution Strategy (When Blocked)
+### Why Implementation Feels Hard
+- Architecture design and Rust implementation are being done at the same time.
+- Domain invariants are still evolving, which causes constant type/model churn.
+- Rust forces explicit typing, ownership, and error boundaries early.
+- Building full modules before compile-safe slices increases friction.
+
+### Working Method (Early Modules)
+1. Build one invariant at a time, not one full subsystem.
+2. Keep first passes pure and local (no DB/network/async until domain logic is stable).
+3. Write minimal compile-first code, then tests, then extension.
+
+### 60-Minute Unblock Flow
+1. In `src/domain/order.rs`, define only:
+- `Side`
+- `TimeInForce`
+- `SignedOrder` (fields only)
+2. Implement only:
+- `validate_order_fields(order, now_ms)`
+3. Add only 3 tests:
+- valid order passes
+- expired order fails
+- zero size fails
+4. Run `cargo test` until green.
+5. Log unclear points in `/Users/prakharojha/Desktop/me/personal/CLOB/logs/THOUGHT_LOG.md`.
+
+### Scope Guardrails
+- Do not implement hashing/signatures in the same pass as initial validation.
+- Do not write migrations until `SignedOrder` fields and validation rules are stable.
+- Do not add API handlers before domain tests are green.

@@ -4,3 +4,26 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+# Serialization — used for JSON wire format and event log persistence
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# SHA-256 hashing — used for canonical order hash computation
+sha2 = "0.10"
+
+# ed25519 signatures — traders sign orders, engine verifies them
+# Feature "rand_core" is needed to generate key pairs in tests and main
+ed25519-dalek = { version = "2", features = ["rand_core"] }
+
+# Hex encoding — order hashes are displayed and stored as hex strings
+hex = "0.4"
+
+# Ergonomic error type derivation — every module defines its own Error enum
+thiserror = "1"
+
+# UUIDv4 generation — server-assigned order_id (not part of canonical hash)
+uuid = { version = "1", features = ["v4"] }
+
+# Random number generation — used in tests to generate ed25519 key pairs
+# OsRng provides cryptographically secure randomness from the OS
+rand = "0.8"

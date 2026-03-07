@@ -23,3 +23,5 @@ docker-compose.override.yml
 .vscode/
 *.swp
 *.swo
+
+logs/plans/
